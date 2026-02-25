@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:marketify_app/splash_screen.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'product_model.dart';
+import 'product_card.dart';
 
 void main() {
   runApp(const MyApp());
