@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:marketify_app/cart_page.dart';
+import 'package:marketify_app/notification_page.dart';
+import 'package:marketify_app/product_detail_page.dart';
 import 'package:marketify_app/splash_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -19,6 +22,11 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
       home: SplashScreen(),
+      routes: {
+        '/noti': (context) => const NotificationPage(),
+        '/cart': (context) => const CartPage(),
+        '/productdetail': (context) => const ProductDetailPage(),
+      },
     );
   }
 }
