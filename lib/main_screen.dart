@@ -44,7 +44,12 @@ class MainScreen extends StatelessWidget {
             child: Column(
               children: [
                 CircleAvatar(
-                  backgroundColor: const Color.fromARGB(255, 218, 0, 0).withOpacity(0.2),
+                  backgroundColor: const Color.fromARGB(
+                    255,
+                    218,
+                    0,
+                    0,
+                  ).withOpacity(0.2),
                   child: Icon(categories[index]['icon'], color: Colors.orange),
                 ),
                 const SizedBox(height: 5),
