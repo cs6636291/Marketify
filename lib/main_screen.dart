@@ -45,8 +45,14 @@ class _MainScreenState extends State<MainScreen> {
         titleSpacing: 10,
         title: _buildModernSearchBar(),
         actions: [
-          _buildAppBarIcon(Icons.notifications_none_rounded, () => Navigator.pushNamed(context, '/noti')),
-          _buildAppBarIcon(Icons.shopping_cart_outlined, () => Navigator.pushNamed(context, '/cart')),
+          _buildAppBarIcon(
+            Icons.notifications_none_rounded,
+            () => Navigator.pushNamed(context, '/noti'),
+          ),
+          _buildAppBarIcon(
+            Icons.shopping_cart_outlined,
+            () => Navigator.pushNamed(context, '/cart'),
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -56,7 +62,10 @@ class _MainScreenState extends State<MainScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text("What's New", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),),
+              child: Text(
+                "What's New",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
             ),
             const SizedBox(height: 5),
             SizedBox(
@@ -90,7 +99,9 @@ class _MainScreenState extends State<MainScreen> {
                   height: 7,
                   width: _currentPage == index ? 20 : 7,
                   decoration: BoxDecoration(
-                    color: _currentPage == index ? const Color(0xFFC70000) : Colors.grey[300],
+                    color: _currentPage == index
+                        ? const Color(0xFFC70000)
+                        : Colors.grey[300],
                     borderRadius: BorderRadius.circular(5),
                   ),
                 );
@@ -103,10 +114,30 @@ class _MainScreenState extends State<MainScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildCircleMenu(context, Icons.grid_view_rounded, "Category", const CategoryPage()),
-                  _buildCircleMenu(context, Icons.discount_rounded, "Promotion", const PromotionPage()),
-                  _buildCircleMenu(context, Icons.local_shipping_rounded, "Code", const CodePage()),
-                  _buildCircleMenu(context, Icons.fastfood_rounded, "Food", null),
+                  _buildCircleMenu(
+                    context,
+                    Icons.grid_view_rounded,
+                    "Category",
+                    const CategoryPage(),
+                  ),
+                  _buildCircleMenu(
+                    context,
+                    Icons.discount_rounded,
+                    "Promotion",
+                    const PromotionPage(),
+                  ),
+                  _buildCircleMenu(
+                    context,
+                    Icons.local_shipping_rounded,
+                    "Code",
+                    const CodeCoupon(),
+                  ),
+                  _buildCircleMenu(
+                    context,
+                    Icons.fastfood_rounded,
+                    "Food",
+                    null,
+                  ),
                 ],
               ),
             ),
@@ -116,7 +147,11 @@ class _MainScreenState extends State<MainScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
                 "Recommendation",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
             ),
 
@@ -129,14 +164,16 @@ class _MainScreenState extends State<MainScreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(10, 5, 10, 100),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.75,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.75,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                        ),
                     itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) => ProductCard(product: snapshot.data![index]),
+                    itemBuilder: (context, index) =>
+                        ProductCard(product: snapshot.data![index]),
                   );
                 }
                 return const Center(child: CircularProgressIndicator());
@@ -176,11 +213,21 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildCircleMenu(BuildContext context, IconData icon, String label, Widget? page) {
+  Widget _buildCircleMenu(
+    BuildContext context,
+    IconData icon,
+    String label,
+    Widget? page,
+  ) {
     return Column(
       children: [
         InkWell(
-          onTap: () => page != null ? Navigator.push(context, MaterialPageRoute(builder: (context) => page)) : null,
+          onTap: () => page != null
+              ? Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => page),
+                )
+              : null,
           child: CircleAvatar(
             radius: 28,
             backgroundColor: const Color(0xFFC70000).withOpacity(0.1),
@@ -188,7 +235,10 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
       ],
     );
   }
@@ -201,7 +251,11 @@ class _MainScreenState extends State<MainScreen> {
         color: const Color(0xFFC70000),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
       child: Row(
@@ -209,9 +263,17 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           _buildNavButton(Icons.home_rounded, "Home", null),
           _buildNavButton(Icons.shopping_bag, "Shop", const ProductList()),
-          _buildNavButton(Icons.play_circle_fill, "Video", const ShortvidPage()),
-          _buildNavButton(Icons.chat_bubble_rounded, "Chat", const ChatPage()),
-          _buildNavButton(Icons.person_rounded, "Profile", const UserProfilePage()),
+          _buildNavButton(
+            Icons.play_circle_fill,
+            "Video",
+            const VideoPlayerScreen(),
+          ),
+          _buildNavButton(
+            Icons.chat_bubble_rounded,
+            "Chat",
+            const ChatScreen(),
+          ),
+          _buildNavButton(Icons.person_rounded, "Profile", const UserProfile()),
         ],
       ),
     );
@@ -219,12 +281,20 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildNavButton(IconData icon, String label, Widget? target) {
     return InkWell(
-      onTap: () => target != null ? Navigator.push(context, MaterialPageRoute(builder: (context) => target)) : null,
+      onTap: () => target != null
+          ? Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => target),
+            )
+          : null,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: Colors.white, size: 30),
-          Text(label, style: const TextStyle(fontSize: 11, color: Colors.white)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Colors.white),
+          ),
         ],
       ),
     );

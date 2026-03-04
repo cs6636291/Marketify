@@ -8,7 +8,6 @@ import 'product_model.dart'; // อย่าลืม import model มาด้�
 
 class ProductDetailPage extends StatefulWidget {
   const ProductDetailPage({super.key});
-
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
 }
@@ -101,9 +100,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => 
-                    Navigator.pushNamed(
-                      context, 
+                    onTap: () => Navigator.pushNamed(
+                      context,
                       '/shopprofile',
                       arguments: product.shopId,
                     ),
@@ -163,7 +161,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
 
             FutureBuilder<List<Review>>(
-              future: ApiService().fetchReviews(product.id), // ดึงรีวิวตาม ID สินค้า
+              future: ApiService().fetchReviews(
+                product.id,
+              ), // ดึงรีวิวตาม ID สินค้า
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -175,18 +175,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Padding(
                     padding: EdgeInsets.all(20),
-                    child: Text("ยังไม่มีรีวิวสำหรับสินค้านี้", style: TextStyle(color: Colors.grey)),
+                    child: Text(
+                      "ยังไม่มีรีวิวสำหรับสินค้านี้",
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   );
                 }
 
                 return ListView.builder(
                   shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(), // ปิด scroll ซ้อน
+                  physics:
+                      const NeverScrollableScrollPhysics(), // ปิด scroll ซ้อน
                   itemCount: snapshot.data!.length,
                   itemBuilder: (context, index) {
                     final review = snapshot.data![index];
                     return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
@@ -200,21 +207,31 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               CircleAvatar(
                                 radius: 15,
                                 backgroundColor: Colors.red[100],
-                                child: Text(review.username[0], style: const TextStyle(fontSize: 12)),
+                                child: Text(
+                                  review.username[0],
+                                  style: const TextStyle(fontSize: 12),
+                                ),
                               ),
                               const SizedBox(width: 10),
                               Text(
                                 review.username,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               const Spacer(),
                               // แสดงดาว
                               Row(
-                                children: List.generate(5, (i) => Icon(
-                                  Icons.star,
-                                  size: 14,
-                                  color: i < review.rating ? Colors.amber : Colors.grey[300],
-                                )),
+                                children: List.generate(
+                                  5,
+                                  (i) => Icon(
+                                    Icons.star,
+                                    size: 14,
+                                    color: i < review.rating
+                                        ? Colors.amber
+                                        : Colors.grey[300],
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -226,7 +243,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           const SizedBox(height: 4),
                           Text(
                             review.createdAt.split(' ')[0], // แสดงแค่วันที่
-                            style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                            ),
                           ),
                         ],
                       ),
@@ -236,8 +256,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               },
             ),
             const SizedBox(height: 20),
-
-
           ],
         ),
       ),
@@ -256,7 +274,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: ElevatedButton(
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ChatPage()),
+                  MaterialPageRoute(builder: (context) => ChatScreen()),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 209, 0, 0),

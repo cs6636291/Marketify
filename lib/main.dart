@@ -22,13 +22,17 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: const Color.fromARGB(255, 255, 255, 255))),
+      theme: ThemeData(
+        colorScheme: .fromSeed(
+          seedColor: const Color.fromARGB(255, 255, 255, 255),
+        ),
+      ),
       home: SplashScreen(),
       routes: {
         '/noti': (context) => const NotificationPage(),
         '/cart': (context) => const CartPage(),
         '/productdetail': (context) => const ProductDetailPage(),
-        '/shopprofile' : (context) => ShopProfilePage()
+        '/shopprofile': (context) => ShopProfileScreen(),
       },
     );
   }
