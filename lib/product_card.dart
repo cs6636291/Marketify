@@ -59,7 +59,7 @@ class ProductCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Icon(Icons.shopping_cart, color: Color.fromARGB(255, 209, 0, 0), size: 30),
+                      const Icon(Icons.favorite, color: Color.fromARGB(255, 255, 97, 97), size: 30),
                     ],
                   ),
                   const SizedBox(height: 4),

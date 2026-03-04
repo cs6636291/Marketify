@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:marketify_app/cart_page.dart';
+import 'package:marketify_app/category_page.dart';
 import 'package:marketify_app/notification_page.dart';
 import 'package:marketify_app/product_detail_page.dart';
+import 'package:marketify_app/shop_profile_page.dart';
 import 'package:marketify_app/splash_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -20,12 +22,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      theme: ThemeData(colorScheme: .fromSeed(seedColor: const Color.fromARGB(255, 255, 255, 255))),
       home: SplashScreen(),
       routes: {
         '/noti': (context) => const NotificationPage(),
         '/cart': (context) => const CartPage(),
         '/productdetail': (context) => const ProductDetailPage(),
+        '/shopprofile' : (context) => ShopProfilePage()
       },
     );
   }

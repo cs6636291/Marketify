@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'product_model.dart';
+import 'review_model.dart';
 
 class ApiService {
   Future<List<Product>> fetchProducts() async {
@@ -12,5 +13,17 @@ class ApiService {
     } else {
       throw Exception('ไม่สามารถโหลดข้อมูลสินค้าได้');
     }
+  }
+  Future<List<Review>> fetchReviews(String productId) async {
+  final response = await http.get(
+    Uri.parse('http://10.0.2.2/my_shop/get_reviews.php?product_id=$productId'),
+  );
+
+  if (response.statusCode == 200) {
+    List jsonResponse = json.decode(response.body);
+    return jsonResponse.map((data) => Review.fromJson(data)).toList();
+  } else {
+    throw Exception('Failed to load reviews');
+  }
   }
 }
