@@ -1,36 +1,218 @@
 import 'package:flutter/material.dart';
 import 'package:marketify_app/api_service.dart';
-import 'package:marketify_app/buyNow_page.dart';
 import 'package:marketify_app/chat_page.dart';
 import 'package:marketify_app/review_model.dart';
-import 'package:marketify_app/shop_profile_page.dart';
-import 'product_model.dart'; // อย่าลืม import model มาด้วย
+import 'package:shared_preferences/shared_preferences.dart';
+import 'product_model.dart';
 
 class ProductDetailPage extends StatefulWidget {
   const ProductDetailPage({super.key});
+
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
 }
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   bool isFollowing = false;
+  int selectedQuantity = 1;
+
+  late Product product;
+  Future<List<Review>>? _reviewsFuture;
+  bool _isInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      product = ModalRoute.of(context)!.settings.arguments as Product;
+      _reviewsFuture = ApiService().fetchReviews(product.id);
+      _isInitialized = true;
+    }
+  }
+
+  void _showSelectionSheet(BuildContext context, bool isBuyNow) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          image: DecorationImage(
+                            image: NetworkImage(
+                              "http://10.0.2.2/my_shop/images/${product.imageUrl}",
+                            ),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "฿${product.price}",
+                            style: const TextStyle(
+                              fontSize: 24,
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            "คลัง: ${product.stock}",
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "จำนวน",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              if (selectedQuantity > 1) {
+                                setModalState(() => selectedQuantity--);
+                              }
+                            },
+                            icon: const Icon(Icons.remove_circle_outline),
+                          ),
+                          Text(
+                            "$selectedQuantity",
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              if (selectedQuantity < product.stock) {
+                                setModalState(() => selectedQuantity++);
+                              }
+                            },
+                            icon: const Icon(Icons.add_circle_outline, color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        // --- แก้ไขจุดที่ 1: เก็บ Messenger ไว้ก่อน pop ---
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        
+                        Navigator.pop(context); // ปิด BottomSheet
+
+                        if (isBuyNow) {
+                          if (mounted) {
+                            Navigator.pushNamed(
+                              context,
+                              '/buynow',
+                              arguments: {
+                                'product': product,
+                                'quantity': selectedQuantity,
+                              },
+                            );
+                          }
+                        } else {
+                          final prefs = await SharedPreferences.getInstance();
+                          final String? userId = prefs.getString('user_id');
+
+                          if (userId != null) {
+                            bool success = await ApiService().addToCart(
+                              int.parse(product.id),
+                              selectedQuantity,
+                              int.parse(userId),
+                            );
+
+                            // --- แก้ไขจุดที่ 2: ใช้ตัวแปรที่เก็บไว้ แทนการเรียกตรงๆ ---
+                            if (success) {
+                              scaffoldMessenger.showSnackBar(
+                                SnackBar(
+                                  content: Text("เพิ่ม ${product.name} ลงรถเข็นแล้ว"),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } else {
+                              scaffoldMessenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text("เกิดข้อผิดพลาดในการเพิ่มลงรถเข็น"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } else {
+                            scaffoldMessenger.showSnackBar(
+                              const SnackBar(content: Text("กรุณาเข้าสู่ระบบก่อน")),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 209, 0, 0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        isBuyNow ? "ซื้อตอนนี้" : "เพิ่มลงรถเข็น",
+                        style: const TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // --- 1. ส่วนการดึงข้อมูลที่ส่งมาจาก ProductCard ---
-    final product = ModalRoute.of(context)!.settings.arguments as Product;
     const String imageUrlPath = "http://10.0.2.2/my_shop/images/";
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(product.name), // แสดงชื่อสินค้าบน AppBar
-        backgroundColor: const Color.fromARGB(255, 209, 0, 0),
-        foregroundColor: Colors.white,
+        title: Text(product.name),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0.5,
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.pushNamed(context, '/cart'),
+            icon: const Icon(Icons.shopping_cart_outlined),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 2. ส่วนแสดงรูปภาพสินค้าขนาดใหญ่ ---
             Container(
               width: double.infinity,
               height: 300,
@@ -40,24 +222,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 fit: BoxFit.contain,
               ),
             ),
-
-            // --- 3. ส่วนรายละเอียดสินค้า ---
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ชื่อสินค้า
                   Text(
                     product.name,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-
-                  // ราคาสินค้า
                   Text(
                     '฿${product.price}',
                     style: const TextStyle(
@@ -71,23 +245,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     style: TextStyle(
                       fontSize: 14,
                       color: product.stock > 0 ? Colors.grey[700] : Colors.red,
-                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // เส้นคั่น
                   const Divider(),
-                  const SizedBox(height: 10),
-
-                  // หัวข้อรายละเอียด
                   const Text(
                     "รายละเอียดสินค้า",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-
-                  // คำอธิบาย (ถ้าใน Model มี description ให้ใช้ product.description)
                   Text(
                     product.description,
                     style: const TextStyle(fontSize: 16, color: Colors.grey),
@@ -96,56 +262,29 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      '/shopprofile',
-                      arguments: product.shopId,
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 25,
-                          backgroundColor: Colors.grey[200],
-                          backgroundImage:
-                              product.shopLogo != null && product.shopLogo != ""
-                              ? NetworkImage(
-                                  "http://10.0.2.2/my_shop/images/logo/${product.shopLogo}",
-                                )
-                              : const AssetImage(
-                                      'http://10.0.2.2/my_shop/images/default_shop.png',
-                                    )
-                                    as ImageProvider,
-                        ),
-                        SizedBox(width: 10),
-                        Text(
-                          product.shopName,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundImage: product.shopLogo.isNotEmpty
+                        ? NetworkImage("http://10.0.2.2/my_shop/images/logo/${product.shopLogo}")
+                        : const AssetImage('assets/default_shop.png') as ImageProvider,
                   ),
-                  Spacer(),
+                  const SizedBox(width: 10),
+                  Text(
+                    product.shopName,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
                   ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        isFollowing = !isFollowing;
-                      });
-                    },
+                    onPressed: () => setState(() => isFollowing = !isFollowing),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isFollowing
-                          ? Colors.grey
-                          : const Color.fromARGB(255, 209, 0, 0),
+                      backgroundColor: isFollowing ? Colors.grey : Colors.red,
                     ),
                     child: Text(
                       isFollowing ? 'Followed' : 'Follow',
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
@@ -153,105 +292,26 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
             const Divider(),
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: EdgeInsets.all(20),
               child: Text(
                 'Product Reviews',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-
             FutureBuilder<List<Review>>(
-              future: ApiService().fetchReviews(
-                product.id,
-              ), // ดึงรีวิวตาม ID สินค้า
+              future: _reviewsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text("ไม่สามารถโหลดรีวิวได้"),
-                  );
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      "ยังไม่มีรีวิวสำหรับสินค้านี้",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  );
                 }
-
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text("ยังไม่มีรีวิว"));
+                }
                 return ListView.builder(
                   shrinkWrap: true,
-                  physics:
-                      const NeverScrollableScrollPhysics(), // ปิด scroll ซ้อน
+                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: snapshot.data!.length,
-                  itemBuilder: (context, index) {
-                    final review = snapshot.data![index];
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 15,
-                                backgroundColor: Colors.red[100],
-                                child: Text(
-                                  review.username[0],
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                review.username,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Spacer(),
-                              // แสดงดาว
-                              Row(
-                                children: List.generate(
-                                  5,
-                                  (i) => Icon(
-                                    Icons.star,
-                                    size: 14,
-                                    color: i < review.rating
-                                        ? Colors.amber
-                                        : Colors.grey[300],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            review.comment,
-                            style: const TextStyle(color: Colors.black87),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            review.createdAt.split(' ')[0], // แสดงแค่วันที่
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                  itemBuilder: (context, index) => _buildReviewCard(snapshot.data![index]),
                 );
               },
             ),
@@ -259,8 +319,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           ],
         ),
       ),
-
-      //ปุ่มสั่งซื้อด้านล่างสุด
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(15),
         decoration: const BoxDecoration(
@@ -269,69 +327,75 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ),
         child: Row(
           children: [
-            Expanded(
-              flex: 1,
-              child: ElevatedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ChatScreen()),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 209, 0, 0),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: Icon(
-                  Icons.chat_bubble_rounded,
-                  color: Colors.white,
-                  size: 25,
-                ),
-              ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              flex: 1,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 209, 0, 0),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Icon(
-                  Icons.shopping_cart,
-                  color: Colors.white,
-                  size: 25,
-                ),
-              ),
-            ),
-            SizedBox(width: 10),
+            _buildBottomIconBtn(Icons.chat_bubble_rounded, () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatScreen()),
+              );
+            }),
+            const SizedBox(width: 10),
+            _buildBottomIconBtn(Icons.shopping_cart, () {
+              setState(() => selectedQuantity = 1);
+              _showSelectionSheet(context, false);
+            }),
+            const SizedBox(width: 10),
             Expanded(
               flex: 3,
               child: ElevatedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => BuyNowPage()),
-                ),
+                onPressed: () {
+                  setState(() => selectedQuantity = 1);
+                  _showSelectionSheet(context, true);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 209, 0, 0),
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text(
-                  "Buy Now",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+                child: const Text("Buy Now", style: TextStyle(fontSize: 18, color: Colors.white)),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildReviewCard(Review review) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 15,
+                child: Text(review.username.isNotEmpty ? review.username[0] : "?"),
+              ),
+              const SizedBox(width: 10),
+              Text(review.username, style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(review.comment),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomIconBtn(IconData icon, VoidCallback onTap) {
+    return Expanded(
+      flex: 1,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromARGB(255, 209, 0, 0),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+        child: Icon(icon, color: Colors.white, size: 25),
       ),
     );
   }

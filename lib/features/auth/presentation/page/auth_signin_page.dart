@@ -5,6 +5,9 @@ import 'package:marketify_app/features/auth/presentation/page/auth_signup_page.d
 import 'package:marketify_app/features/auth/presentation/page/forgot_password_screen.dart';
 import 'package:marketify_app/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:marketify_app/main_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthSigninPage extends StatefulWidget {
   const AuthSigninPage({super.key});
@@ -14,15 +17,11 @@ class AuthSigninPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthSigninPage> {
-  //sign in
   final _signInForkey = GlobalKey<FormState>();
   final _signInEmailController = TextEditingController();
   final _signInPasswordController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -31,13 +30,78 @@ class _AuthPageState extends State<AuthSigninPage> {
     super.dispose();
   }
 
-  void _onSignInPressed() {
+  // ฟังก์ชัน Login เชื่อมต่อ Database และบันทึกข้อมูลทุกส่วน
+  Future<void> _onSignInPressed() async {
     if (_signInForkey.currentState?.validate() ?? false) {
-      //to do
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => MainScreen()),
-      );
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        final response = await http.post(
+          Uri.parse("http://10.0.2.2/my_shop/login.php"), // ตรวจสอบ URL ให้ถูกต้อง
+          body: {
+            "email": _signInEmailController.text.trim(),
+            "password": _signInPasswordController.text,
+          },
+        );
+
+        final data = json.decode(response.body);
+
+        if (data['status'] == "success") {
+          final prefs = await SharedPreferences.getInstance();
+          
+          // ดึงก้อนข้อมูล user ออกมา
+          var user = data['user'];
+
+          // --- ส่วนที่แก้ไข: บันทึกข้อมูลให้ครบตามที่หน้า Profile ต้องการ ---
+          await prefs.setString('user_id', user['id'].toString());
+          await prefs.setString('user_email', user['email']);
+          await prefs.setString('username', user['username']?.toString() ?? '');
+          await prefs.setString('address', user['address']?.toString() ?? '');
+          await prefs.setString('created_at', user['created_at']?.toString() ?? '');
+          // -------------------------------------------------------
+
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("เข้าสู่ระบบสำเร็จ"),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+          );
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['message']),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        debugPrint("DEBUG_ERROR: $e");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -54,15 +118,15 @@ class _AuthPageState extends State<AuthSigninPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Center(
                     child: Image.asset(
-                      'assets/images/logo.png',
+                      'assets/images/logo.png', // ตรวจสอบ path รูปภาพ
                       width: 180,
                       height: 180,
                     ),
                   ),
-                  SizedBox(height: 40),
+                  const SizedBox(height: 40),
                   AuthTextField(
                     controller: _signInEmailController,
                     label: 'Email',
@@ -78,7 +142,7 @@ class _AuthPageState extends State<AuthSigninPage> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   AuthTextField(
                     controller: _signInPasswordController,
                     label: 'Password',
@@ -102,7 +166,7 @@ class _AuthPageState extends State<AuthSigninPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ForgotPasswordScreen(),
+                            builder: (context) => const ForgotPasswordScreen(),
                           ),
                         );
                       },
@@ -120,9 +184,9 @@ class _AuthPageState extends State<AuthSigninPage> {
                   AuthButton(
                     text: 'Sign In',
                     onPressed: _onSignInPressed,
-                    isLoading: false,
+                    isLoading: _isLoading,
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -139,7 +203,7 @@ class _AuthPageState extends State<AuthSigninPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => AuthSignupPage(),
+                              builder: (context) => const AuthSignupPage(),
                             ),
                           );
                         },

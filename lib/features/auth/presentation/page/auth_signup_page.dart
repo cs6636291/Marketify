@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:marketify_app/core/common/constants/app_constants.dart';
 import 'package:marketify_app/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:marketify_app/main_screen.dart';
+// 1. เพิ่ม 2 บรรทัดนี้ครับ
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AuthSignupPage extends StatefulWidget {
   const AuthSignupPage({super.key});
@@ -12,17 +15,14 @@ class AuthSignupPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthSignupPage> {
-  //sign up
   final _signUpForkey = GlobalKey<FormState>();
   final _signUpNameController = TextEditingController();
   final _signUpEmailController = TextEditingController();
   final _signUpPasswordController = TextEditingController();
   final _signUpConfirmPasswordController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  // 2. เพิ่มตัวแปรเช็คสถานะการโหลด
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -33,13 +33,58 @@ class _AuthPageState extends State<AuthSignupPage> {
     super.dispose();
   }
 
-  void _onSignUpPressed() {
+  // 3. แก้ไขฟังก์ชันนี้ให้เป็น Future และใช้ http post
+  Future<void> _onSignUpPressed() async {
     if (_signUpForkey.currentState?.validate() ?? false) {
-      // to do
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => MainScreen()),
-      );
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        // เปลี่ยน URL เป็น IP เครื่องคอมคุณ หรือ 10.0.2.2 สำหรับ Emulator
+        final response = await http.post(
+          Uri.parse("http://10.0.2.2/my_shop/register.php"),
+          body: {
+            "email": _signUpEmailController.text.trim(),
+            "password": _signUpPasswordController.text,
+          },
+        );
+
+        final data = json.decode(response.body);
+
+        if (data['status'] == "success") {
+          // สมัครสำเร็จ
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['message']),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // ย้ายไปหน้า Login หรือ Main ตามต้องการ
+          Navigator.pop(context);
+        } else {
+          // ถ้ามีข้อผิดพลาดจาก PHP (เช่น อีเมลซ้ำ)
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['message']),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้")),
+        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -64,7 +109,7 @@ class _AuthPageState extends State<AuthSignupPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 35),
+                  const SizedBox(height: 35),
                   AuthTextField(
                     controller: _signUpEmailController,
                     label: 'Email',
@@ -80,7 +125,7 @@ class _AuthPageState extends State<AuthSignupPage> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   AuthTextField(
                     controller: _signUpPasswordController,
                     label: 'Password',
@@ -97,7 +142,7 @@ class _AuthPageState extends State<AuthSignupPage> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   AuthTextField(
                     controller: _signUpConfirmPasswordController,
                     label: 'Confirm Password',
@@ -114,40 +159,14 @@ class _AuthPageState extends State<AuthSignupPage> {
                       return null;
                     },
                   ),
-
                   const SizedBox(height: 60),
                   AuthButton(
                     text: 'Create Account',
                     onPressed: _onSignUpPressed,
-                    isLoading: false,
+                    isLoading: _isLoading, // 4. อย่าลืมส่งค่า isLoading ไปด้วย
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Already have an account?",
-                        style: GoogleFonts.outfit(
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text(
-                          'Sign In',
-                          style: GoogleFonts.outfit(
-                            color: AppConstants.primaryColor,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  // ... ส่วนที่เหลือเหมือนเดิม ...
                 ],
               ),
             ),

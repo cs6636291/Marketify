@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:marketify_app/api_service.dart';
 import 'package:marketify_app/core/common/constants/app_constants.dart';
+import 'package:marketify_app/product_model.dart';
 
 class ShopProfileScreen extends StatefulWidget {
   const ShopProfileScreen({Key? key}) : super(key: key);
@@ -10,52 +12,28 @@ class ShopProfileScreen extends StatefulWidget {
 }
 
 class _ShopProfileScreenState extends State<ShopProfileScreen> {
+  // เปลี่ยนเป็น nullable และเรียกใช้ทันทีเพื่อกัน LateInitializationError
+  Future<List<Product>>? _productsFuture;
   int _currentBannerIndex = 0;
-  // use network URLs instead of asset paths
+  final String imageUrlPath = "http://10.0.2.2/my_shop/images/";
+
   final List<String> bannerImages = [
     'https://payhip.com/cdn-cgi/image/format=auto/https://pe56d.s3.amazonaws.com/o_1ig3agi3r1278190s1ds21tq1vakc.jpg',
     'https://marketplace.canva.com/EAGkJu6RBag/1/0/1600w/canva-pink-and-white-minimalist-e-commerce-presentation-pUrMakjsI6U.jpg',
     'https://marketplace.canva.com/EAGHC5NUD-Q/1/0/1600w/canva-black-and-white-modern-fashion-sale-banner-landscape-n7GVeIDu0Tg.jpg',
   ];
 
-  final List<Map<String, dynamic>> products = [
-    {
-      'id': 1,
-      'name': 'Wireless Headphones',
-      'price': '\$89.99',
-      'image':
-          'https://www.shutterstock.com/image-photo/facial-cosmetic-products-containers-on-600nw-2566963627.jpg',
-      'isFavorite': false,
-    },
-    {
-      'id': 2,
-      'name': 'Smart Watch',
-      'price': '\$199.99',
-      'image':
-          'https://cdn.shopify.com/s/files/1/2303/2711/files/2_e822dae0-14df-4cb8-b145-ea4dc0966b34.jpg?v=1617059123',
-      'isFavorite': false,
-    },
-    {
-      'id': 3,
-      'name': 'Phone Case',
-      'price': '\$19.99',
-      'image':
-          'https://www.shutterstock.com/image-photo/facial-cosmetic-products-containers-on-600nw-2566963627.jpg',
-      'isFavorite': false,
-    },
-    {
-      'id': 4,
-      'name': 'USB-C Cable',
-      'price': '\$9.99',
-      'image':
-          'https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTExL3BmLXMxMDgtcG0tNDExMy1tb2NrdXAuanBn.jpg',
-      'isFavorite': false,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // ดึงข้อมูลจาก API
+    _productsFuture = ApiService().fetchProducts();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -74,35 +52,46 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Enhanced Shop Header Section
-            _buildEnhancedShopHeader(),
-            const SizedBox(height: 24),
+      body: FutureBuilder<List<Product>>(
+        future: _productsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('เกิดข้อผิดพลาด: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('ไม่พบสินค้าในระบบ'));
+          }
 
-            // Recommendation Banner Section
-            _buildBannerSlider(),
-            const SizedBox(height: 24),
+          final productList = snapshot.data!;
+          final firstProduct = productList[0];
 
-            // Product Grid Section
-            _buildProductGrid(),
-          ],
-        ),
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildEnhancedShopHeader(firstProduct),
+                const SizedBox(height: 24),
+                _buildBannerSlider(),
+                const SizedBox(height: 24),
+                _buildProductGrid(productList),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildEnhancedShopHeader() {
+  Widget _buildEnhancedShopHeader(Product product) {
     return Stack(
       children: [
-        // Background Image with Gradient Overlay
+        // Background Image
         Container(
           height: 200,
           width: double.infinity,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             image: DecorationImage(
-              image: const NetworkImage(
+              image: NetworkImage(
                 'https://marketplace.canva.com/EAGvt7arfJE/1/0/1600w/canva-red-yellow-and-blue-modern-fashion-sale-medium-banner-CMxDpY2Tnrc.jpg',
               ),
               fit: BoxFit.cover,
@@ -115,90 +104,61 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.black.withOpacity(0.3),
-                  Colors.black.withOpacity(0.6),
+                  Colors.black.withOpacity(0.7),
                 ],
               ),
             ),
           ),
         ),
 
-        // Content
+        // Content Positioned
         Positioned(
           left: 16,
           right: 16,
-          top: 20,
-          bottom: 0,
+          bottom: 20, // ปรับให้ชิดล่างเล็กน้อยดูสวยกว่า
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // Left Section - Shop Info
+              // Shop Avatar & Info
               Expanded(
+                flex: 2,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Circular Shop Avatar
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: 70,
+                      height: 70,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                        color: Colors.grey[300],
-                        image: const DecorationImage(
+                        border: Border.all(color: Colors.white, width: 2),
+                        image: DecorationImage(
                           image: NetworkImage(
-                            'https://instagram.fbkk24-1.fna.fbcdn.net/v/t51.2885-19/135329731_220501839649929_3698531228271091242_n.jpg?efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby45OTguYzIifQ&_nc_ht=instagram.fbkk24-1.fna.fbcdn.net&_nc_cat=109&_nc_oc=Q6cZ2QHfJpYly53EBr-mZb60yXgH-MY458utyaFpXFyf1oNilKrvoeT9X2Ol-Lns-cFuN1mf-RUx3NMQlp2arjOSWCFc&_nc_ohc=fpU6ggNqsaoQ7kNvwFvakXg&_nc_gid=1lKnaqASqAtSTUjKRwil7A&edm=ALGbJPMBAAAA&ccb=7-5&oh=00_AfwCPyNplkH-VEybjn0beOwDVQCZ41oHRhWaBlvHNTqjIg&oe=69AC4FD1&_nc_sid=7d3ac5',
+                            'http://10.0.2.2/my_shop/images/logo/${product.shopLogo ?? ""}',
                           ),
                           fit: BoxFit.cover,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Shop Name
-                    Text(
-                      'TechHub Store',
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 8),
-
-                    // Rating Row
+                    Text(
+                      product.shopName ?? 'Store Name',
+                      style: GoogleFonts.outfit(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star, color: Colors.amber, size: 14),
                         const SizedBox(width: 4),
                         Text(
-                          '4.8',
+                          '4.8 | 2k Followers',
                           style: GoogleFonts.outfit(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 1,
-                          height: 16,
-                          color: Colors.white.withOpacity(0.5),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '2k Followers',
-                          style: GoogleFonts.outfit(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white70,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -207,71 +167,51 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
                 ),
               ),
 
-              // Right Section - Buttons
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Follow Button
-                  SizedBox(
-                    width: 110,
-                    height: 40,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppConstants.primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 4,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.add, color: Colors.white, size: 18),
-                          Text(
-                            'Follow',
-                            style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
+              // Action Buttons - แก้ไขปัญหา Overflow ตรงนี้
+              Flexible(
+                flex: 1,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      height: 36,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppConstants.primaryColor,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ],
+                        ),
+                        child: const Text(
+                          'Follow',
+                          style: TextStyle(color: Colors.white, fontSize: 13),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 15),
-
-                  // Chat Button
-                  SizedBox(
-                    width: 105,
-                    height: 40,
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: Colors.white.withOpacity(0.7),
-                          width: 2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.chat, color: Colors.white, size: 18),
-                          Text(
-                            ' Chat',
-                            style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 36,
+                      child: OutlinedButton(
+                        onPressed: () {},
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white),
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ],
+                        ),
+                        child: const Text(
+                          'Chat',
+                          style: TextStyle(color: Colors.white, fontSize: 13),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -284,54 +224,39 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
     return Column(
       children: [
         SizedBox(
-          height: 180,
+          height: 160,
           child: PageView.builder(
-            onPageChanged: (index) {
-              setState(() {
-                _currentBannerIndex = index;
-              });
-            },
+            onPageChanged: (index) =>
+                setState(() => _currentBannerIndex = index),
             itemCount: bannerImages.length,
             itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ClipRRect(
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    color: Colors.grey[300],
-                    // load from network
-                    child: Image.network(
-                      bannerImages[index],
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return const Center(child: CircularProgressIndicator());
-                      },
-                      errorBuilder: (context, error, stack) {
-                        return const Center(child: Icon(Icons.broken_image));
-                      },
-                    ),
+                  image: DecorationImage(
+                    image: NetworkImage(bannerImages[index]),
+                    fit: BoxFit.cover,
                   ),
                 ),
               );
             },
           ),
         ),
-        const SizedBox(height: 12),
-
-        // Page Indicator Dots
+        const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
             bannerImages.length,
-            (index) => Container(
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
               margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: _currentBannerIndex == index ? 12 : 8,
-              height: 8,
+              width: _currentBannerIndex == index ? 18 : 7,
+              height: 7,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(4),
                 color: _currentBannerIndex == index
-                    ? Colors.black54
+                    ? AppConstants.primaryColor
                     : Colors.grey[300],
               ),
             ),
@@ -341,23 +266,20 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
     );
   }
 
-  Widget _buildProductGrid() {
+  Widget _buildProductGrid(List<Product> productList) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              'Featured Products',
-              style: GoogleFonts.outfit(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
+          Text(
+            'Featured Products',
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
+          const SizedBox(height: 16),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -367,72 +289,78 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
               mainAxisSpacing: 16,
               childAspectRatio: 0.75,
             ),
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              return _buildProductCard(index);
-            },
+            itemCount: productList.length,
+            itemBuilder: (context, index) =>
+                _buildProductCard(productList[index]),
           ),
-          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Widget _buildProductCard(int index) {
-    final product = products[index];
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Product Image
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
+  Widget _buildProductCard(Product product) {
+    return GestureDetector(
+      onTap: () {
+        // นำทางไปหน้า Product Detail (ถ้ามี)
+        // Navigator.pushNamed(context, '/productdetail', arguments: product);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 11,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
                 ),
-                color: Colors.grey[300],
-                image: DecorationImage(
-                  image: NetworkImage(product['image']),
+                child: Image.network(
+                  imageUrlPath + (product.imageUrl ?? ''),
+                  width: double.infinity,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stack) =>
+                      const Center(child: Icon(Icons.image_not_supported)),
                 ),
               ),
             ),
-          ),
-
-          // Product Info
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product['price'],
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppConstants.primaryColor,
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  product['name'],
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black87,
+                  const SizedBox(height: 4),
+                  Text(
+                    '฿${product.price}',
+                    style: GoogleFonts.outfit(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

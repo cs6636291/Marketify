@@ -22,17 +22,16 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      id: json['id'],
-      name: json['name'],
-      price: json['price'],
-      imageUrl: json['image_url'],
-      description: json['description'] ?? "ไม่มีรายละเอียด",
-      // 3. แปลงค่าจาก String ใน JSON ให้เป็น int
-      stock: int.parse(json['stock'].toString()),
-      shopName: json['shop_name'] ?? "ไม่ระบุ",
-      shopLogo: json['logo_url'] ?? "ไม่มีรูป",
-      shopId: json['shop_id']?.toString() ?? '0',
-    );
-  }
+  return Product(
+    id: json['id']?.toString() ?? '0',
+    name: json['name'] ?? 'ไม่มีชื่อสินค้า',
+    price: json['price']?.toString() ?? '0',
+    imageUrl: json['image_url'] ?? '',
+    description: json['description'] ?? "ไม่มีรายละเอียด",
+    stock: int.tryParse(json['stock']?.toString() ?? '0') ?? 0,
+    shopName: json['shop_name'] ?? "ไม่ระบุร้านค้า",
+    shopLogo: json['logo_url'] ?? "",
+    shopId: json['shop_id']?.toString() ?? '0',
+  );
+}
 }

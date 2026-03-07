@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:marketify_app/core/common/constants/app_constants.dart';
 import 'package:marketify_app/features/auth/presentation/page/auth_signin_page.dart';
 import 'package:marketify_app/main_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // เพิ่ม import
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,14 +18,12 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<Offset> _slideUpAnimation;
   late Animation<double> _scaleUpAnimation;
 
-  final bool isLoggedIn = false;
-
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 2000),
     );
     _fadeInAnimation = CurvedAnimation(
       parent: _controller,
@@ -42,29 +41,40 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Future.delayed(const Duration(milliseconds: 3000), () {
-      if (mounted) {
-        Widget nextScreen;
+    // เริ่มกระบวนการเช็คสถานะการเข้าสู่ระบบ
+    _checkAuthAndNavigate();
+  }
 
-        if (!isLoggedIn) {
-          nextScreen = const AuthSigninPage();
-        } else {
-          nextScreen = const MainScreen();
-        }
+  // ฟังก์ชันใหม่สำหรับเช็ค SharedPreferences
+  Future<void> _checkAuthAndNavigate() async {
+    final prefs = await SharedPreferences.getInstance();
+    // ลองหาค่า user_id ถ้าไม่มีจะเป็น null
+    final String? userId = prefs.getString('user_id');
 
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: const Duration(milliseconds: 1000),
-          ),
-        );
+    // รอให้ Animation โชว์อย่างน้อย 3 วินาทีตามใจเจ้าของโค้ด
+    await Future.delayed(const Duration(milliseconds: 3000));
+
+    if (mounted) {
+      Widget nextScreen;
+
+      // ถ้า userId ไม่เป็น null แปลว่าเคย Login แล้ว
+      if (userId != null && userId.isNotEmpty) {
+        nextScreen = const MainScreen();
+      } else {
+        nextScreen = const AuthSigninPage();
       }
-    });
+
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 1000),
+        ),
+      );
+    }
   }
 
   @override
@@ -72,7 +82,8 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.dispose();
     super.dispose();
   }
-
+  
+  // ส่วน build เหมือนเดิมทุกประการ...
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,14 +101,12 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Logo
                       Image.asset(
                         'assets/images/logo.png',
                         width: 200,
                         height: 200,
                       ),
                       const SizedBox(height: 40),
-                      // Loading indicator
                       SizedBox(
                         width: 28,
                         height: 28,

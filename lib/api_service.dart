@@ -5,7 +5,9 @@ import 'review_model.dart';
 
 class ApiService {
   Future<List<Product>> fetchProducts() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2/my_shop/get_products.php'));
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2/my_shop/get_products.php'),
+    );
 
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
@@ -14,16 +16,61 @@ class ApiService {
       throw Exception('ไม่สามารถโหลดข้อมูลสินค้าได้');
     }
   }
+
   Future<List<Review>> fetchReviews(String productId) async {
+    final response = await http.get(
+      Uri.parse(
+        'http://10.0.2.2/my_shop/get_reviews.php?product_id=$productId',
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      List jsonResponse = json.decode(response.body);
+      return jsonResponse.map((data) => Review.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load reviews');
+    }
+  }
+
+  // ในไฟล์ api_service.dart
+Future<bool> addToCart(int productId, int quantity, int userId) async {
+  try {
+    final response = await http.post(
+      Uri.parse("http://10.0.2.2/my_shop/add_to_cart.php"),
+      body: {
+        "product_id": productId.toString(),
+        "quantity": quantity.toString(),
+        "user_id": userId.toString(), // ส่ง ID ผู้ใช้ไปที่ PHP ด้วย
+      },
+    );
+    return response.statusCode == 200;
+  } catch (e) {
+    return false;
+  }
+}
+// เพิ่มฟังก์ชันนี้เข้าไปในคลาส ApiService ของคุณ
+Future<List<Product>> searchProducts(String query) async {
   final response = await http.get(
-    Uri.parse('http://10.0.2.2/my_shop/get_reviews.php?product_id=$productId'),
+    Uri.parse("http://10.0.2.2/my_shop/search_products.php?query=${Uri.encodeComponent(query)}"),
   );
 
   if (response.statusCode == 200) {
-    List jsonResponse = json.decode(response.body);
-    return jsonResponse.map((data) => Review.fromJson(data)).toList();
+    List<dynamic> data = json.decode(response.body);
+    return data.map((json) => Product.fromJson(json)).toList();
   } else {
-    throw Exception('Failed to load reviews');
+    throw Exception('Failed to search products');
   }
+}
+Future<List<Product>> fetchProductsByCategory(String categoryId) async {
+  final response = await http.get(
+    Uri.parse("http://10.0.2.2/my_shop/search_products.php?category_id=$categoryId")
+  );
+  if (response.statusCode == 200) {
+    List jsonResponse = json.decode(response.body);
+    return jsonResponse.map((data) => Product.fromJson(data)).toList();
+  } else {
+    throw Exception('Failed to load products');
   }
+}
+  
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'category_model.dart';
+import 'package:marketify_app/product_list.dart'; // เพิ่ม import หน้า ProductList
 
 class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
@@ -59,41 +60,37 @@ class _CategoryPageState extends State<CategoryPage> {
               separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final item = categories[index];
-
                 IconData categoryIcon;
 
                 switch (item.name.toLowerCase()) {
-                  case 'clothing':
-                    categoryIcon = Icons.checkroom;
-                    break;
-                  case 'accessories':
-                    categoryIcon = Icons.watch;
-                    break;
-                  case 'gadgets':
-                    categoryIcon = Icons.devices;
-                    break;
-                  case 'shoes':
-                    categoryIcon = Icons.directions_run;
-                    break;
-                  default:
-                    categoryIcon =
-                        Icons.category;
+                  case 'clothing': categoryIcon = Icons.checkroom; break;
+                  case 'accessories': categoryIcon = Icons.watch; break;
+                  case 'gadgets': categoryIcon = Icons.devices; break;
+                  case 'shoes': categoryIcon = Icons.directions_run; break;
+                  default: categoryIcon = Icons.category;
                 }
+
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: const Color.fromARGB(255, 214, 214, 214),
-                    child: Icon(
-                      categoryIcon,
-                      color: const Color.fromARGB(255, 71, 71, 71),
-                    ),
+                    child: Icon(categoryIcon, color: const Color.fromARGB(255, 71, 71, 71)),
                   ),
                   title: Text(
                     item.name,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 20),
                   onTap: () {
-                    print("คุณกดเลือก: ${item.name}");
+                    // แก้ไข: ส่งทั้ง name ไปโชว์ และ id ไปกรอง
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductList(
+                          searchKeyword: item.name,
+                          categoryId: item.id, 
+                        ),
+                      ),
+                    );
                   },
                 );
               },

@@ -7,6 +7,7 @@ import 'package:marketify_app/product_card.dart';
 import 'package:marketify_app/product_list.dart';
 import 'package:marketify_app/product_model.dart';
 import 'package:marketify_app/promotion_page.dart';
+import 'package:marketify_app/search_page.dart';
 import 'package:marketify_app/shortVid_page.dart';
 import 'package:marketify_app/user_profile_page.dart';
 
@@ -124,7 +125,7 @@ class _MainScreenState extends State<MainScreen> {
                     context,
                     Icons.discount_rounded,
                     "Promotion",
-                    const PromotionPage(),
+                    const PromotionPage()
                   ),
                   _buildCircleMenu(
                     context,
@@ -187,20 +188,32 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   // Search Bar
+  // ค้นหาส่วน _buildModernSearchBar ในหน้า Home เดิมของคุณ
   Widget _buildModernSearchBar() {
-    return Container(
-      height: 45,
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const TextField(
-        decoration: InputDecoration(
-          hintText: 'Search Here',
-          hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
-          prefixIcon: Icon(Icons.search, color: Colors.grey, size: 20),
-          border: InputBorder.none, // เอาเส้นใต้ขีดๆ ออก
-          contentPadding: EdgeInsets.symmetric(vertical: 8),
+    return InkWell(
+      onTap: () {
+        // เมื่อกดแล้วให้ย้ายไปหน้า SearchPage
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SearchPage()),
+        );
+      },
+      child: Container(
+        height: 45,
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: const [
+            Icon(Icons.search, color: Colors.grey, size: 20),
+            SizedBox(width: 10),
+            Text(
+              'Search Here',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+          ],
         ),
       ),
     );
