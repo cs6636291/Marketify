@@ -3,6 +3,7 @@ import 'package:marketify_app/buyNow_page.dart';
 import 'package:marketify_app/cart_page.dart';
 import 'package:marketify_app/category_page.dart';
 import 'package:marketify_app/notification_page.dart';
+import 'package:marketify_app/order_success_page.dart';
 import 'package:marketify_app/product_detail_page.dart';
 import 'package:marketify_app/shop_profile_page.dart';
 import 'package:marketify_app/splash_screen.dart';
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
         '/productdetail': (context) => const ProductDetailPage(),
         '/shopprofile': (context) => const ShopProfileScreen(),
         '/buynow' : (context) => BuyNowPage(),
-        
+        '/order_success': (context) => const OrderSuccessPage(),
       },
     );
   }

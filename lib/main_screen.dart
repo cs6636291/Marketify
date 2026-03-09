@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:marketify_app/api_service.dart';
 import 'package:marketify_app/category_page.dart';
 import 'package:marketify_app/chat_page.dart';
@@ -34,6 +37,27 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
+  Future<int> _getUnreadCount() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? uId = prefs.getString('user_id') ?? prefs.getInt('user_id')?.toString();
+      
+      if (uId == null) return 0;
+
+      final res = await http.get(
+        Uri.parse("http://10.0.2.2/my_shop/get_unread_count.php?user_id=$uId"),
+      );
+
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        return int.parse(data['unread_count'].toString());
+      }
+    } catch (e) {
+      debugPrint("Badge Error: $e");
+    }
+    return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,13 +70,49 @@ class _MainScreenState extends State<MainScreen> {
         titleSpacing: 10,
         title: _buildModernSearchBar(),
         actions: [
-          _buildAppBarIcon(
-            Icons.notifications_none_rounded,
-            () => Navigator.pushNamed(context, '/noti'),
+          FutureBuilder<int>(
+            future: _getUnreadCount(),
+            builder: (context, snapshot) {
+              int count = snapshot.data ?? 0;
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_none_rounded, color: Colors.black87),
+                    onPressed: () async {
+                      await Navigator.pushNamed(context, '/noti');
+                      setState(() {}); 
+                    },
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC70000),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(
+                            color: Colors.white, 
+                            fontSize: 9, 
+                            fontWeight: FontWeight.bold
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
           _buildAppBarIcon(
             Icons.shopping_cart_outlined,
-            () => Navigator.pushNamed(context, '/cart'),
+            () => Navigator.pushNamed(context, '/cart').then((_) => setState(() {})),
           ),
           const SizedBox(width: 8),
         ],
@@ -61,8 +121,8 @@ class _MainScreenState extends State<MainScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
               child: Text(
                 "What's New",
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -89,7 +149,6 @@ class _MainScreenState extends State<MainScreen> {
                 },
               ),
             ),
-
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -108,55 +167,25 @@ class _MainScreenState extends State<MainScreen> {
                 );
               }),
             ),
-
-            // เมนู 4 ปุ่มกลางหน้า
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildCircleMenu(
-                    context,
-                    Icons.grid_view_rounded,
-                    "Category",
-                    const CategoryPage(),
-                  ),
-                  _buildCircleMenu(
-                    context,
-                    Icons.discount_rounded,
-                    "Promotion",
-                    const PromotionPage()
-                  ),
-                  _buildCircleMenu(
-                    context,
-                    Icons.local_shipping_rounded,
-                    "Code",
-                    const CodeCoupon(),
-                  ),
-                  _buildCircleMenu(
-                    context,
-                    Icons.fastfood_rounded,
-                    "Food",
-                    null,
-                  ),
+                  _buildCircleMenu(context, Icons.grid_view_rounded, "Category", const CategoryPage()),
+                  _buildCircleMenu(context, Icons.discount_rounded, "Promotion", const PromotionPage()),
+                  _buildCircleMenu(context, Icons.local_shipping_rounded, "Code", const CodeCoupon()),
+                  _buildCircleMenu(context, Icons.fastfood_rounded, "Food", null),
                 ],
               ),
             ),
-
-            // Recommendation
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
                 "Recommendation",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
             ),
-
-            // รายการสินค้า
             FutureBuilder<List<Product>>(
               future: ApiService().fetchProducts(),
               builder: (context, snapshot) {
@@ -165,16 +194,14 @@ class _MainScreenState extends State<MainScreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(10, 5, 10, 100),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.75,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.75,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
                     itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) =>
-                        ProductCard(product: snapshot.data![index]),
+                    itemBuilder: (context, index) => ProductCard(product: snapshot.data![index]),
                   );
                 }
                 return const Center(child: CircularProgressIndicator());
@@ -187,16 +214,10 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // Search Bar
-  // ค้นหาส่วน _buildModernSearchBar ในหน้า Home เดิมของคุณ
   Widget _buildModernSearchBar() {
     return InkWell(
       onTap: () {
-        // เมื่อกดแล้วให้ย้ายไปหน้า SearchPage
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const SearchPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchPage()));
       },
       child: Container(
         height: 45,
@@ -205,14 +226,11 @@ class _MainScreenState extends State<MainScreen> {
           color: Colors.grey[100],
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Row(
-          children: const [
+        child: const Row(
+          children: [
             Icon(Icons.search, color: Colors.grey, size: 20),
             SizedBox(width: 10),
-            Text(
-              'Search Here',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
+            Text('Search Here', style: TextStyle(color: Colors.grey, fontSize: 14)),
           ],
         ),
       ),
@@ -226,20 +244,12 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildCircleMenu(
-    BuildContext context,
-    IconData icon,
-    String label,
-    Widget? page,
-  ) {
+  Widget _buildCircleMenu(BuildContext context, IconData icon, String label, Widget? page) {
     return Column(
       children: [
         InkWell(
           onTap: () => page != null
-              ? Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => page),
-                )
+              ? Navigator.push(context, MaterialPageRoute(builder: (context) => page)).then((_) => setState(() {}))
               : null,
           child: CircleAvatar(
             radius: 28,
@@ -248,10 +258,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-        ),
+        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -264,11 +271,7 @@ class _MainScreenState extends State<MainScreen> {
         color: const Color(0xFFC70000),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
       child: Row(
@@ -276,16 +279,8 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           _buildNavButton(Icons.home_rounded, "Home", null),
           _buildNavButton(Icons.shopping_bag, "Shop", const ProductList()),
-          _buildNavButton(
-            Icons.play_circle_fill,
-            "Video",
-            const VideoPlayerScreen(),
-          ),
-          _buildNavButton(
-            Icons.chat_bubble_rounded,
-            "Chat",
-            const ChatScreen(),
-          ),
+          _buildNavButton(Icons.play_circle_fill, "Video", const VideoPlayerScreen()),
+          _buildNavButton(Icons.chat_bubble_rounded, "Chat", const ChatScreen()),
           _buildNavButton(Icons.person_rounded, "Profile", const UserProfile()),
         ],
       ),
@@ -294,20 +289,18 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildNavButton(IconData icon, String label, Widget? target) {
     return InkWell(
-      onTap: () => target != null
-          ? Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => target),
-            )
-          : null,
+      onTap: () {
+        if (target != null) {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => target)).then((_) {
+            setState(() {});
+          });
+        }
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: Colors.white, size: 30),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, color: Colors.white),
-          ),
+          Text(label, style: const TextStyle(fontSize: 11, color: Colors.white)),
         ],
       ),
     );

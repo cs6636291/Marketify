@@ -121,10 +121,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () async {
-                        // --- แก้ไขจุดที่ 1: เก็บ Messenger ไว้ก่อน pop ---
                         final scaffoldMessenger = ScaffoldMessenger.of(context);
-                        
-                        Navigator.pop(context); // ปิด BottomSheet
+                        Navigator.pop(context);
 
                         if (isBuyNow) {
                           if (mounted) {
@@ -148,7 +146,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               int.parse(userId),
                             );
 
-                            // --- แก้ไขจุดที่ 2: ใช้ตัวแปรที่เก็บไว้ แทนการเรียกตรงๆ ---
                             if (success) {
                               scaffoldMessenger.showSnackBar(
                                 SnackBar(
@@ -261,26 +258,54 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ],
               ),
             ),
+            // --- แก้ไข: ส่วนร้านค้าให้กดไปหน้า Shop Profile ได้ ---
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundImage: product.shopLogo.isNotEmpty
-                        ? NetworkImage("http://10.0.2.2/my_shop/images/logo/${product.shopLogo}")
-                        : const AssetImage('assets/default_shop.png') as ImageProvider,
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/shopprofile',
+                          arguments: product.shopId, // ตรวจสอบชื่อตัวแปรใน Model ให้ตรงกัน
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 25,
+                            backgroundImage: product.shopLogo.isNotEmpty
+                                ? NetworkImage("http://10.0.2.2/my_shop/images/logo/${product.shopLogo}")
+                                : const AssetImage('assets/default_shop.png') as ImageProvider,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  product.shopName,
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const Text(
+                                  "ดูร้านค้า >",
+                                  style: TextStyle(fontSize: 12, color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    product.shopName,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const Spacer(),
                   ElevatedButton(
                     onPressed: () => setState(() => isFollowing = !isFollowing),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isFollowing ? Colors.grey : Colors.red,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                     child: Text(
                       isFollowing ? 'Followed' : 'Follow',
