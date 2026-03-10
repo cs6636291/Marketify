@@ -6,7 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'product_model.dart';
 
 class ProductDetailPage extends StatefulWidget {
-  const ProductDetailPage({super.key});
+  // เพิ่มตัวแปรรับค่า product จากหน้าอื่น
+  final Product product;
+
+  const ProductDetailPage({super.key, required this.product});
 
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
@@ -16,21 +19,47 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool isFollowing = false;
   int selectedQuantity = 1;
 
+  // เปลี่ยนเป็น late product เพื่อเก็บข้อมูลที่อาจจะ update จาก API
   late Product product;
   Future<List<Review>>? _reviewsFuture;
   bool _isInitialized = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_isInitialized) {
-      product = ModalRoute.of(context)!.settings.arguments as Product;
-      _reviewsFuture = ApiService().fetchReviews(product.id);
-      _isInitialized = true;
+  void initState() {
+    super.initState();
+    // กำหนดค่าเริ่มต้นจาก widget ที่ส่งมา
+    product = widget.product;
+    _reviewsFuture = ApiService().fetchReviews(product.id);
+
+    // ดึงข้อมูลล่าสุดจาก Server เผื่อสต็อกเปลี่ยน
+    _refreshProductData(product.id);
+  }
+
+  // ฟังก์ชันดึงข้อมูลใหม่จาก API
+  Future<void> _refreshProductData(String productId) async {
+    try {
+      final updatedProduct = await ApiService().fetchProductById(productId);
+      if (updatedProduct != null && mounted) {
+        setState(() {
+          product = updatedProduct;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error refreshing product: $e");
     }
   }
 
   void _showSelectionSheet(BuildContext context, bool isBuyNow) {
+    if (product.stock <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("ขออภัย สินค้าหมดแล้ว"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -75,7 +104,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           ),
                           Text(
                             "คลัง: ${product.stock}",
-                            style: const TextStyle(color: Colors.grey),
+                            style: TextStyle(
+                              color: product.stock > 0
+                                  ? Colors.grey
+                                  : Colors.red,
+                              fontWeight: product.stock > 0
+                                  ? FontWeight.normal
+                                  : FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
@@ -87,7 +123,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     children: [
                       const Text(
                         "จำนวน",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Row(
                         children: [
@@ -101,15 +140,30 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           ),
                           Text(
                             "$selectedQuantity",
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           IconButton(
                             onPressed: () {
                               if (selectedQuantity < product.stock) {
                                 setModalState(() => selectedQuantity++);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "เลือกได้ไม่เกินจำนวนในสต็อก",
+                                    ),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
                               }
                             },
-                            icon: const Icon(Icons.add_circle_outline, color: Colors.red),
+                            icon: const Icon(
+                              Icons.add_circle_outline,
+                              color: Colors.red,
+                            ),
                           ),
                         ],
                       ),
@@ -133,7 +187,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 'product': product,
                                 'quantity': selectedQuantity,
                               },
-                            );
+                            ).then((_) => _refreshProductData(product.id));
                           }
                         } else {
                           final prefs = await SharedPreferences.getInstance();
@@ -149,22 +203,20 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             if (success) {
                               scaffoldMessenger.showSnackBar(
                                 SnackBar(
-                                  content: Text("เพิ่ม ${product.name} ลงรถเข็นแล้ว"),
+                                  content: Text(
+                                    "เพิ่ม ${product.name} ลงรถเข็นแล้ว",
+                                  ),
                                   backgroundColor: Colors.green,
                                 ),
                               );
                             } else {
                               scaffoldMessenger.showSnackBar(
                                 const SnackBar(
-                                  content: Text("เกิดข้อผิดพลาดในการเพิ่มลงรถเข็น"),
+                                  content: Text("เกิดข้อผิดพลาด"),
                                   backgroundColor: Colors.red,
                                 ),
                               );
                             }
-                          } else {
-                            scaffoldMessenger.showSnackBar(
-                              const SnackBar(content: Text("กรุณาเข้าสู่ระบบก่อน")),
-                            );
                           }
                         }
                       },
@@ -176,7 +228,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                       child: Text(
                         isBuyNow ? "ซื้อตอนนี้" : "เพิ่มลงรถเข็น",
-                        style: const TextStyle(color: Colors.white, fontSize: 18),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
                   ),
@@ -201,7 +256,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         elevation: 0.5,
         actions: [
           IconButton(
-            onPressed: () => Navigator.pushNamed(context, '/cart'),
+            onPressed: () => Navigator.pushNamed(
+              context,
+              '/cart',
+            ).then((_) => _refreshProductData(product.id)),
             icon: const Icon(Icons.shopping_cart_outlined),
           ),
         ],
@@ -226,7 +284,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 children: [
                   Text(
                     product.name,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -238,9 +299,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ),
                   ),
                   Text(
-                    'คงเหลือ: ${product.stock} ชิ้น',
+                    product.stock > 0
+                        ? 'คงเหลือ: ${product.stock} ชิ้น'
+                        : 'สินค้าหมด',
                     style: TextStyle(
                       fontSize: 14,
+                      fontWeight: product.stock <= 0
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       color: product.stock > 0 ? Colors.grey[700] : Colors.red,
                     ),
                   ),
@@ -258,9 +324,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ],
               ),
             ),
-            // --- แก้ไข: ส่วนร้านค้าให้กดไปหน้า Shop Profile ได้ ---
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 10.0,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -269,7 +337,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         Navigator.pushNamed(
                           context,
                           '/shopprofile',
-                          arguments: product.shopId, // ตรวจสอบชื่อตัวแปรใน Model ให้ตรงกัน
+                          arguments: product.shopId,
                         );
                       },
                       child: Row(
@@ -277,8 +345,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           CircleAvatar(
                             radius: 25,
                             backgroundImage: product.shopLogo.isNotEmpty
-                                ? NetworkImage("http://10.0.2.2/my_shop/images/logo/${product.shopLogo}")
-                                : const AssetImage('assets/default_shop.png') as ImageProvider,
+                                ? NetworkImage(
+                                    "http://10.0.2.2/my_shop/images/logo/${product.shopLogo}",
+                                  )
+                                : const AssetImage('assets/default_shop.png')
+                                      as ImageProvider,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -287,12 +358,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               children: [
                                 Text(
                                   product.shopName,
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const Text(
                                   "ดูร้านค้า >",
-                                  style: TextStyle(fontSize: 12, color: Colors.red),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.red,
+                                  ),
                                 ),
                               ],
                             ),
@@ -305,7 +382,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     onPressed: () => setState(() => isFollowing = !isFollowing),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isFollowing ? Colors.grey : Colors.red,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
                     child: Text(
                       isFollowing ? 'Followed' : 'Follow',
@@ -336,7 +415,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: snapshot.data!.length,
-                  itemBuilder: (context, index) => _buildReviewCard(snapshot.data![index]),
+                  itemBuilder: (context, index) =>
+                      _buildReviewCard(snapshot.data![index]),
                 );
               },
             ),
@@ -372,11 +452,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   _showSelectionSheet(context, true);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 209, 0, 0),
+                  backgroundColor: product.stock > 0
+                      ? const Color.fromARGB(255, 209, 0, 0)
+                      : Colors.grey,
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                child: const Text("Buy Now", style: TextStyle(fontSize: 18, color: Colors.white)),
+                child: Text(
+                  product.stock > 0 ? "Buy Now" : "Out of Stock",
+                  style: const TextStyle(fontSize: 18, color: Colors.white),
+                ),
               ),
             ),
           ],
@@ -389,7 +476,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -397,10 +487,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             children: [
               CircleAvatar(
                 radius: 15,
-                child: Text(review.username.isNotEmpty ? review.username[0] : "?"),
+                child: Text(
+                  review.username.isNotEmpty ? review.username[0] : "?",
+                ),
               ),
               const SizedBox(width: 10),
-              Text(review.username, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                review.username,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -418,7 +513,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color.fromARGB(255, 209, 0, 0),
           padding: const EdgeInsets.symmetric(vertical: 10),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
         child: Icon(icon, color: Colors.white, size: 25),
       ),

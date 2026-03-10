@@ -29,9 +29,12 @@ class MyApp extends StatelessWidget {
       routes: {
         '/noti': (context) => const NotificationPage(),
         '/cart': (context) => const CartPage(),
-        '/productdetail': (context) => const ProductDetailPage(),
+        '/productdetail': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Product;
+          return ProductDetailPage(product: args);
+        },
         '/shopprofile': (context) => const ShopProfileScreen(),
-        '/buynow' : (context) => BuyNowPage(),
+        '/buynow': (context) => BuyNowPage(),
         '/order_success': (context) => const OrderSuccessPage(),
       },
     );
