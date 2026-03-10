@@ -32,7 +32,6 @@ class ApiService {
     }
   }
 
-  // ในไฟล์ api_service.dart
   Future<bool> addToCart(int productId, int quantity, int userId) async {
     try {
       final response = await http.post(
@@ -40,7 +39,7 @@ class ApiService {
         body: {
           "product_id": productId.toString(),
           "quantity": quantity.toString(),
-          "user_id": userId.toString(), // ส่ง ID ผู้ใช้ไปที่ PHP ด้วย
+          "user_id": userId.toString(),
         },
       );
       return response.statusCode == 200;
@@ -49,7 +48,6 @@ class ApiService {
     }
   }
 
-  // เพิ่มฟังก์ชันนี้เข้าไปในคลาส ApiService ของคุณ
   Future<List<Product>> searchProducts(String query) async {
     final response = await http.get(
       Uri.parse(
@@ -93,7 +91,6 @@ class ApiService {
     }
   }
 
-  // เพิ่มฟังก์ชันดึงข้อมูลสินค้าตัวเดียวตาม ID เพื่ออัปเดตสต็อกล่าสุด
   Future<Product?> fetchProductById(String productId) async {
     try {
       final response = await http.get(
@@ -104,7 +101,6 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // เช็คว่าข้อมูลที่ได้มาไม่ว่างเปล่า
         if (data != null) {
           return Product.fromJson(data);
         }

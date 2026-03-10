@@ -410,7 +410,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
     );
   }
 
-  // --- ส่วนของ Widget ปุ่มสั่งซื้อด้านล่าง ---
   Widget _buildBottomBar() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -421,7 +420,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
       ),
     );
   }
-} // <--- ตรวจสอบว่ามีปีกกาปิดคลาสอันนี้ด้วยนะ
+}
 
-  // ... (ฟังก์ชันเสริมอื่นๆ _buildAddressSection, _buildProductList, _buildBottomBar เหมือนเดิมของคุณ) ...
 

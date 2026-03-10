@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart'; // เพิ่มเพื่อดึง user_id
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:marketify_app/product_model.dart';
 
@@ -23,11 +23,10 @@ class _CartPageState extends State<CartPage> {
     fetchCart();
   }
 
-  // --- ส่วนที่แก้ไข: ดึงข้อมูลตาม user_id จริง ---
   Future<void> fetchCart() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String? userId = prefs.getString('user_id'); // ดึง ID ของคนที่ Login
+      final String? userId = prefs.getString('user_id');
 
       if (userId == null) {
         setState(() {
@@ -38,7 +37,7 @@ class _CartPageState extends State<CartPage> {
 
       final response = await http.get(
         Uri.parse(
-          "http://10.0.2.2/my_shop/get_cart.php?user_id=$userId", // ใช้ตัวแปร userId ตรงนี้
+          "http://10.0.2.2/my_shop/get_cart.php?user_id=$userId",
         ),
       );
 

@@ -11,7 +11,7 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
-  bool _isFavorite = false; // สถานะหัวใจ
+  bool _isFavorite = false;
 
   @override
   Widget build(BuildContext context) {
@@ -30,9 +30,7 @@ class _ProductCardState extends State<ProductCard> {
         ],
       ),
       child: Stack(
-        // ใช้ Stack เพื่อวางปุ่มหัวใจทับบนโครงสร้างเก่า
         children: [
-          // --- โครงสร้างแบบเก่าที่คุณชอบ ---
           GestureDetector(
             onTap: () {
               Navigator.push(
@@ -54,7 +52,7 @@ class _ProductCardState extends State<ProductCard> {
                         child: Image.network(
                           imageUrlPath + widget.product.imageUrl,
                           fit: BoxFit
-                              .contain, // ใช้ contain ตามแบบเก่าที่สวยกว่า
+                              .contain,
                         ),
                       ),
                     ),
@@ -91,8 +89,6 @@ class _ProductCardState extends State<ProductCard> {
               ],
             ),
           ),
-
-          // --- ปุ่มหัวใจ (ตำแหน่งใหม่ที่คุณชอบ) ---
           Positioned(
             top: 8,
             right: 8,
@@ -111,7 +107,7 @@ class _ProductCardState extends State<ProductCard> {
                 child: Icon(
                   _isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: const Color.fromARGB(255, 255, 97, 97),
-                  size: 24, // ขนาดกำลังดี ไม่บังรูปจนเกินไป
+                  size: 24,
                 ),
               ),
             ),

@@ -30,7 +30,6 @@ class _AuthPageState extends State<AuthSigninPage> {
     super.dispose();
   }
 
-  // ฟังก์ชัน Login เชื่อมต่อ Database และบันทึกข้อมูลทุกส่วน
   Future<void> _onSignInPressed() async {
     if (_signInForkey.currentState?.validate() ?? false) {
       setState(() {
@@ -39,7 +38,7 @@ class _AuthPageState extends State<AuthSigninPage> {
 
       try {
         final response = await http.post(
-          Uri.parse("http://10.0.2.2/my_shop/login.php"), // ตรวจสอบ URL ให้ถูกต้อง
+          Uri.parse("http://10.0.2.2/my_shop/login.php"),
           body: {
             "email": _signInEmailController.text.trim(),
             "password": _signInPasswordController.text,
@@ -51,16 +50,13 @@ class _AuthPageState extends State<AuthSigninPage> {
         if (data['status'] == "success") {
           final prefs = await SharedPreferences.getInstance();
           
-          // ดึงก้อนข้อมูล user ออกมา
           var user = data['user'];
 
-          // --- ส่วนที่แก้ไข: บันทึกข้อมูลให้ครบตามที่หน้า Profile ต้องการ ---
           await prefs.setString('user_id', user['id'].toString());
           await prefs.setString('user_email', user['email']);
           await prefs.setString('username', user['username']?.toString() ?? '');
           await prefs.setString('address', user['address']?.toString() ?? '');
           await prefs.setString('created_at', user['created_at']?.toString() ?? '');
-          // -------------------------------------------------------
 
           if (!mounted) return;
 
@@ -121,7 +117,7 @@ class _AuthPageState extends State<AuthSigninPage> {
                   const SizedBox(height: 20),
                   Center(
                     child: Image.asset(
-                      'assets/images/logo.png', // ตรวจสอบ path รูปภาพ
+                      'assets/images/logo.png',
                       width: 180,
                       height: 180,
                     ),

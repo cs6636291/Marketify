@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:marketify_app/core/common/constants/app_constants.dart';
 import 'package:marketify_app/features/auth/presentation/widgets/auth_widgets.dart';
 import 'package:marketify_app/main_screen.dart';
-// 1. เพิ่ม 2 บรรทัดนี้ครับ
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -21,7 +20,6 @@ class _AuthPageState extends State<AuthSignupPage> {
   final _signUpPasswordController = TextEditingController();
   final _signUpConfirmPasswordController = TextEditingController();
 
-  // 2. เพิ่มตัวแปรเช็คสถานะการโหลด
   bool _isLoading = false;
 
   @override
@@ -33,7 +31,6 @@ class _AuthPageState extends State<AuthSignupPage> {
     super.dispose();
   }
 
-  // 3. แก้ไขฟังก์ชันนี้ให้เป็น Future และใช้ http post
   Future<void> _onSignUpPressed() async {
     if (_signUpForkey.currentState?.validate() ?? false) {
       setState(() {
@@ -41,7 +38,6 @@ class _AuthPageState extends State<AuthSignupPage> {
       });
 
       try {
-        // เปลี่ยน URL เป็น IP เครื่องคอมคุณ หรือ 10.0.2.2 สำหรับ Emulator
         final response = await http.post(
           Uri.parse("http://10.0.2.2/my_shop/register.php"),
           body: {
@@ -53,7 +49,6 @@ class _AuthPageState extends State<AuthSignupPage> {
         final data = json.decode(response.body);
 
         if (data['status'] == "success") {
-          // สมัครสำเร็จ
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -61,10 +56,8 @@ class _AuthPageState extends State<AuthSignupPage> {
               backgroundColor: Colors.green,
             ),
           );
-          // ย้ายไปหน้า Login หรือ Main ตามต้องการ
           Navigator.pop(context);
         } else {
-          // ถ้ามีข้อผิดพลาดจาก PHP (เช่น อีเมลซ้ำ)
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -163,10 +156,9 @@ class _AuthPageState extends State<AuthSignupPage> {
                   AuthButton(
                     text: 'Create Account',
                     onPressed: _onSignUpPressed,
-                    isLoading: _isLoading, // 4. อย่าลืมส่งค่า isLoading ไปด้วย
+                    isLoading: _isLoading,
                   ),
                   const SizedBox(height: 24),
-                  // ... ส่วนที่เหลือเหมือนเดิม ...
                 ],
               ),
             ),

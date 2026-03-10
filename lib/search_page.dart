@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-// นำเข้าหน้า ProductList เพื่อใช้ในขั้นตอนสุดท้าย
 import 'package:marketify_app/product_list.dart'; 
 
 class SearchPage extends StatefulWidget {
@@ -33,7 +32,6 @@ class _SearchPageState extends State<SearchPage> {
   _saveHistory(String query) async {
     if (query.isEmpty) return;
     final prefs = await SharedPreferences.getInstance();
-    // ถ้ามีคำนี้อยู่แล้ว ให้ลบของเก่าออกก่อนเพื่อเอามาไว้อันบนสุด
     history.remove(query);
     history.insert(0, query);
     if (history.length > 5) history.removeLast(); 
@@ -46,7 +44,6 @@ class _SearchPageState extends State<SearchPage> {
       return;
     }
     try {
-      // *** แก้ไข: ต้องใช้ Uri.encodeComponent เพื่อส่งภาษาไทย ***
       final url = Uri.parse(
           "http://10.0.2.2/my_shop/search_products.php?query=${Uri.encodeComponent(query)}");
       
@@ -130,13 +127,12 @@ class _SearchPageState extends State<SearchPage> {
         final product = suggestions[index];
         return ListTile(
           leading: const Icon(Icons.search, color: Colors.redAccent),
-          // *** แก้ไข: ข้อมูลเป็น Map ต้องใช้ ['name'] ***
           title: Text(product['name'] ?? ""), 
           onTap: () {
             String selectedName = product['name'];
             setState(() {
               searchController.text = selectedName;
-              suggestions = []; // เคลียร์รายการแนะนำทิ้ง
+              suggestions = [];
             });
             _saveHistory(selectedName);
             _performFinalSearch(selectedName);
@@ -147,7 +143,6 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _performFinalSearch(String query) {
-    // เมื่อเลือกคำค้นหาแล้ว ให้กระโดดไปหน้า ProductList และส่งคำค้นหาไป
     Navigator.push(
       context,
       MaterialPageRoute(
