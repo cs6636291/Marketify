@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'category_model.dart';
-import 'package:marketify_app/product_list.dart'; // เพิ่ม import หน้า ProductList
+import 'package:marketify_app/product_list.dart';
 
 class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
@@ -81,7 +81,6 @@ class _CategoryPageState extends State<CategoryPage> {
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 20),
                   onTap: () {
-                    // แก้ไข: ส่งทั้ง name ไปโชว์ และ id ไปกรอง
                     Navigator.push(
                       context,
                       MaterialPageRoute(

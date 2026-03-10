@@ -24,14 +24,12 @@ class _OrderHistoryPageState extends State<OrderHistoryPage>
   void initState() {
     super.initState();
     
-    // 1. คำนวณหา Index (ต้องสัมพันธ์กับจำนวน Tab ด้านล่าง)
     int initialIndex = 0; // 'all'
     if (widget.initialStatus == 'pending') initialIndex = 1;
     if (widget.initialStatus == 'paid') initialIndex = 2;
     if (widget.initialStatus == 'shipped') initialIndex = 3;
-    if (widget.initialStatus == 'completed') initialIndex = 4; // หน้าที่ 5
+    if (widget.initialStatus == 'completed') initialIndex = 4;
 
-    // 2. กำหนด length เป็น 5 ให้ตรงกับจำนวน Tab ทั้งหมด
     _tabController = TabController(
       length: 5, 
       vsync: this, 
@@ -70,25 +68,23 @@ class _OrderHistoryPageState extends State<OrderHistoryPage>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          // รายการปุ่ม Tab (ต้องมี 5 ปุ่ม)
           tabs: const [
             Tab(text: "ทั้งหมด"),
             Tab(text: "ที่ต้องชำระ"),
             Tab(text: "ที่ต้องจัดส่ง"),
             Tab(text: "ที่ต้องได้รับ"),
-            Tab(text: "ที่ต้องให้คะแนน"), // เพิ่ม Tab นี้
+            Tab(text: "ที่ต้องให้คะแนน"),
           ],
         ),
       ),
-      // รายการหน้าเนื้อหา (ต้องมี 5 หน้า และลำดับต้องตรงกับ Tab)
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildOrderList('all'),       // Index 0
-          _buildOrderList('pending'),   // Index 1
-          _buildOrderList('paid'),      // Index 2
-          _buildOrderList('shipped'),   // Index 3
-          _buildOrderList('completed'), // Index 4 (ตรงกับ initialStatus 'completed')
+          _buildOrderList('all'),
+          _buildOrderList('pending'),
+          _buildOrderList('paid'),
+          _buildOrderList('shipped'),
+          _buildOrderList('completed'),
         ],
       ),
     );

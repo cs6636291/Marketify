@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // อย่าลืมลงแพ็คเกจนี้ใน pubspec.yaml นะครับ
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PromotionPage extends StatefulWidget {
-  const PromotionPage({super.key}); // ไม่ต้องรับค่าผ่าน Constructor แล้ว ให้มันหาเองข้างใน
+  const PromotionPage({super.key});
 
   @override
   State<PromotionPage> createState() => _PromotionPageState();
@@ -21,12 +21,9 @@ class _PromotionPageState extends State<PromotionPage> {
     _loadUserAndData();
   }
 
-  // ฟังก์ชันดึง ID จากเครื่อง และโหลดข้อมูลโปรโมชั่น
   Future<void> _loadUserAndData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      // สมมติว่าตอน Login คุณเก็บ ID ไว้ในชื่อ 'user_id'
-      // ถ้าคุณใช้ชื่ออื่น (เช่น 'id', 'uid') ให้เปลี่ยนให้ตรงกันนะครับ
       currentUserId = prefs.getString('user_id'); 
     });
     fetchPromotions();
@@ -69,7 +66,7 @@ class _PromotionPageState extends State<PromotionPage> {
           SnackBar(content: Text(result['message'])),
         );
         if (result['status'] == 'success') {
-          fetchPromotions(); // อัปเดตจำนวนคงเหลือหน้าจอ
+          fetchPromotions();
         }
       }
     } catch (e) {

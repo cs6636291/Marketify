@@ -22,7 +22,6 @@ class _UserProfileState extends State<UserProfile> {
   String userJoined = "Loading...";
   String userPhone = "Loading...";
 
-  // ตัวแปรสำหรับเก็บจำนวน Badge
   int countToPay = 0;
   int countToShip = 0;
   int countToReceive = 0;
@@ -34,7 +33,6 @@ class _UserProfileState extends State<UserProfile> {
     _loadUserData();
   }
 
-  // ฟังก์ชันดึงจำนวนออเดอร์จาก PHP ที่คุณสร้างไว้
   Future<void> _fetchOrderCounts() async {
     if (userId.isEmpty) return;
     try {
@@ -79,8 +77,6 @@ class _UserProfileState extends State<UserProfile> {
 
       userJoined = prefs.getString('created_at') ?? "ไม่ระบุวันที่";
     });
-
-    // เมื่อโหลด User ข้อมูลเสร็จ ให้ไปดึงเลข Badge ต่อทันที
     if (userId.isNotEmpty) {
       _fetchOrderCounts();
     }
@@ -95,7 +91,6 @@ class _UserProfileState extends State<UserProfile> {
             OrderHistoryPage(userId: userId, initialStatus: status),
       ),
     ).then((value) {
-      // เมื่อกลับมาจากหน้าออเดอร์ ให้โหลดเลข Badge ใหม่เผื่อมีการเปลี่ยนแปลง
       _fetchOrderCounts();
     });
   }
@@ -215,7 +210,7 @@ class _UserProfileState extends State<UserProfile> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _fetchOrderCounts, // ดึงลงเพื่อรีเฟรชเลข Badge ได้
+        onRefresh: _fetchOrderCounts,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
@@ -328,25 +323,25 @@ class _UserProfileState extends State<UserProfile> {
                         _orderItem(
                           Icons.account_balance_wallet_outlined,
                           "To Pay",
-                          countToPay, // ใช้ตัวแปรจริง
+                          countToPay,
                           () => _navigateToOrders('pending'),
                         ),
                         _orderItem(
                           Icons.shopify_outlined,
                           "To Ship",
-                          countToShip, // ใช้ตัวแปรจริง
+                          countToShip,
                           () => _navigateToOrders('paid'),
                         ),
                         _orderItem(
                           Icons.local_shipping_outlined,
                           "To Receive",
-                          countToReceive, // ใช้ตัวแปรจริง
+                          countToReceive,
                           () => _navigateToOrders('shipped'),
                         ),
                         _orderItem(
                           Icons.stars_outlined,
                           "To Rate",
-                          countToRate, // ใช้ตัวแปรจริง
+                          countToRate,
                           () => _navigateToOrders('completed'),
                         ),
                       ],
@@ -448,7 +443,7 @@ class _UserProfileState extends State<UserProfile> {
         child: Column(
           children: [
             Stack(
-              clipBehavior: Clip.none, // เพื่อให้ Badge ล้นออกมาได้สวยๆ
+              clipBehavior: Clip.none,
               children: [
                 Icon(icon, size: 35),
                 if (badgeCount > 0)

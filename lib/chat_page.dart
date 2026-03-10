@@ -75,10 +75,6 @@ class _ChatScreenState extends State<ChatScreen>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat();
-    // simulate seller typing after a moment (example)
-    // Future.delayed(const Duration(seconds: 2), () {
-    //   setState(() => _isTypingIndicator = true);
-    // });
   }
 
   @override
@@ -106,7 +102,6 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   void _attachImage() {
-    // demo: add a network image message
     final msg = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       imageUrl:
@@ -296,7 +291,6 @@ class _ChatScreenState extends State<ChatScreen>
               ),
             ),
 
-            // Bottom Input Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               color: Colors.transparent,

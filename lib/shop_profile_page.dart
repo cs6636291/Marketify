@@ -12,7 +12,6 @@ class ShopProfileScreen extends StatefulWidget {
 }
 
 class _ShopProfileScreenState extends State<ShopProfileScreen> {
-  // เปลี่ยนเป็น nullable และเรียกใช้ทันทีเพื่อกัน LateInitializationError
   Future<List<Product>>? _productsFuture;
   int _currentBannerIndex = 0;
   final String imageUrlPath = "http://10.0.2.2/my_shop/images/";
@@ -26,7 +25,6 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // ดึงข้อมูลจาก API
     _productsFuture = ApiService().fetchProducts();
   }
 
@@ -85,7 +83,6 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
   Widget _buildEnhancedShopHeader(Product product) {
     return Stack(
       children: [
-        // Background Image
         Container(
           height: 200,
           width: double.infinity,
@@ -111,15 +108,13 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
           ),
         ),
 
-        // Content Positioned
         Positioned(
           left: 16,
           right: 16,
-          bottom: 20, // ปรับให้ชิดล่างเล็กน้อยดูสวยกว่า
+          bottom: 20,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // Shop Avatar & Info
               Expanded(
                 flex: 2,
                 child: Column(
@@ -167,7 +162,6 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
                 ),
               ),
 
-              // Action Buttons - แก้ไขปัญหา Overflow ตรงนี้
               Flexible(
                 flex: 1,
                 child: Column(
@@ -301,7 +295,6 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
   Widget _buildProductCard(Product product) {
     return GestureDetector(
       onTap: () {
-        // นำทางไปหน้า Product Detail (ถ้ามี)
         // Navigator.pushNamed(context, '/productdetail', arguments: product);
       },
       child: Container(

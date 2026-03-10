@@ -94,7 +94,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ยังคงเก็บ Loading ไว้เพื่อให้ User ไม่เห็นหน้าว่างๆ ระหว่างดึง Database
     if (isLoading) {
       return const Scaffold(
         backgroundColor: Colors.black,
@@ -106,7 +105,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // วิดีโอพื้นหลัง
           GestureDetector(
             onTap: () => setState(
               () => _controller.value.isPlaying
@@ -125,7 +123,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
           ),
 
-          // --- ตะกร้าสินค้า (ใช้ ?? เพื่อใส่ค่าสำรองถ้าข้อมูลยังไม่มา) ---
           Positioned(
             left: 12,
             right: 120,
@@ -166,7 +163,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                product?.name ?? "ไม่พบชื่อสินค้า", // แก้ไขตรงนี้
+                                product?.name ?? "ไม่พบชื่อสินค้า",
                                 style: GoogleFonts.outfit(
                                   color: const Color.fromARGB(255, 255, 255, 255),
                                   fontSize: 18,
@@ -176,7 +173,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                '฿${product?.price}', // แก้ไขตรงนี้
+                                '฿${product?.price}',
                                 style: GoogleFonts.outfit(
                                   color: const Color.fromARGB(255, 0, 173, 58),
                                   fontSize: 18,
@@ -196,7 +193,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
           ),
 
-          // --- ข้อมูลร้านค้า (ล่างซ้าย) ---
           Positioned(
             left: 20,
             bottom: 60,
@@ -204,7 +200,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product?.shopName ?? "ร้านค้าทั่วไป", // แก้ไขตรงนี้
+                  product?.shopName ?? "ร้านค้าทั่วไป",
                   style: GoogleFonts.outfit(
                     fontSize: 25,
                     color: Colors.white,
@@ -222,7 +218,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
           ),
 
-          // ปุ่มย้อนกลับ
           Positioned(
             left: 20,
             top: 45,
@@ -236,7 +231,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
           ),
 
-          // --- ปุ่มขวา (รูปโปรไฟล์ร้าน & ปุ่มต่างๆ) ---
           Positioned(
             right: 15,
             top: 360,
@@ -244,7 +238,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               children: [
                 CircleAvatar(
                   radius: 25,
-                  // ถ้าไม่มีรูปใน DB ให้ใช้รูป Placeholder แทน แอปจะได้ไม่พัง
                   backgroundImage: NetworkImage(
                     'http://10.0.2.2/my_shop/images/logo/${product?.shopLogo}',
                   ),

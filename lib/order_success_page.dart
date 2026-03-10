@@ -5,7 +5,6 @@ class OrderSuccessPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // รับค่ายอดรวม (ใช้ double ตามที่เราส่งจาก BuyNow)
     final double netAmount = ModalRoute.of(context)!.settings.arguments as double? ?? 0.0;
 
     return Scaffold(
@@ -46,7 +45,6 @@ class OrderSuccessPage extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // กลับไปหน้าแรกสุด (หน้า Home) ทันที โดยไม่ไปหน้า Logo
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   style: ElevatedButton.styleFrom(

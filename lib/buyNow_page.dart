@@ -20,13 +20,13 @@ class _BuyNowPageState extends State<BuyNowPage> {
 
   List<Map<String, dynamic>> checkoutItems = [];
   double subtotal = 0;
-  double discountAmount = 0; // ส่วนลดสินค้า
-  double shippingDiscountAmount = 0; // ส่วนลดค่าส่ง
-  double shippingFee = 40.0; // สมมติค่าส่งพื้นฐาน 40 บาท
+  double discountAmount = 0;
+  double shippingDiscountAmount = 0;
+  double shippingFee = 40.0;
   double totalPrice = 0;
 
-  Map<String, dynamic>? selectedVoucher; // เก็บโค้ดส่วนลดสินค้า
-  Map<String, dynamic>? selectedFreeShipping; // เก็บโค้ดส่งฟรี
+  Map<String, dynamic>? selectedVoucher;
+  Map<String, dynamic>? selectedFreeShipping;
 
   bool _isInitialized = false;
   bool _isFromCart = false;
@@ -73,14 +73,12 @@ class _BuyNowPageState extends State<BuyNowPage> {
   }
 
   void _calculateTotal() {
-    // 1. คำนวณราคาสินค้าทั้งหมด
     double currentSubtotal = checkoutItems.fold(0, (sum, item) {
       final Product p = item['product'];
       final int q = item['quantity'];
       return sum + (double.parse(p.price) * q);
     });
 
-    // 2. คำนวณส่วนลดสินค้า (Voucher)
     double discount = 0;
     if (selectedVoucher != null) {
       double val = double.parse(selectedVoucher!['discount_value'].toString());
@@ -91,13 +89,11 @@ class _BuyNowPageState extends State<BuyNowPage> {
       }
     }
 
-    // 3. คำนวณส่วนลดค่าส่ง (Free Shipping)
     double shipDisc = 0;
     if (selectedFreeShipping != null) {
       shipDisc = double.parse(
         selectedFreeShipping!['discount_value'].toString(),
       );
-      // ถ้าส่วนลดค่าส่งมากกว่าค่าส่งจริง ให้ลดได้สูงสุดแค่เท่าค่าส่ง
       if (shipDisc > shippingFee) shipDisc = shippingFee;
     }
 
@@ -109,8 +105,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
       totalPrice = (currentSubtotal - discount) + (shippingFee - shipDisc);
     });
   }
-
-  // ฟังก์ชันเลือกโค้ด (ใช้ร่วมกันทั้ง 2 ประเภทโดยการกรอง filter)
   void _showVoucherPicker(String filterType) async {
     if (currentUserId == null) return;
     try {
@@ -121,7 +115,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
       );
 
       List allVouchers = json.decode(response.body);
-      // กรองเอาเฉพาะประเภทที่ต้องการ
       List filtered = allVouchers
           .where((v) => v['promotion_type'] == filterType)
           .toList();
@@ -201,8 +194,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
     }
   }
 
-  // ... (ฟังก์ชัน _clearPurchasedItemsFromCart เหมือนเดิม) ...
-
   Future<void> _placeOrder() async {
     if (currentUserId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -211,24 +202,21 @@ class _BuyNowPageState extends State<BuyNowPage> {
       return;
     }
 
-    // รวม ID โค้ดที่จะใช้ (ส่งไป PHP)
-    // หมายเหตุ: ถ้า place_order.php ของคุณรับโค้ดเดียว คุณต้องเลือกส่ง แต่อันนี้ผมรวมให้ดูเผื่อคุณปรับ DB ให้เก็บ 2 โค้ดได้
     List<String> usedVoucherIds = [];
     if (selectedVoucher != null) usedVoucherIds.add(selectedVoucher!['id']);
     if (selectedFreeShipping != null)
       usedVoucherIds.add(selectedFreeShipping!['id']);
 
-    // ... (ส่วนการเช็คสต็อกเหมือนเดิมของคุณ) ...
 
     try {
       Map<String, dynamic> orderData = {
         "user_id": currentUserId,
         "promotion_id": selectedVoucher != null
             ? selectedVoucher!['id']
-            : null, // ส่ง ID ส่วนลดหลัก
+            : null,
         "shipping_promotion_id": selectedFreeShipping != null
             ? selectedFreeShipping!['id']
-            : null, // ส่ง ID ส่งฟรี (ถ้ามี)
+            : null,
         "total_price": subtotal,
         "discount_amount": discountAmount + shippingDiscountAmount,
         "net_amount": totalPrice,
@@ -242,7 +230,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
         }).toList(),
       };
 
-      // ... (ส่วนการยิง http.post เหมือนเดิมของคุณ) ...
       final response = await http.post(
         Uri.parse("http://10.0.2.2/my_shop/place_order.php"),
         headers: {"Content-Type": "application/json"},
@@ -278,7 +265,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
             _buildProductList(),
             const Divider(thickness: 8, color: Color(0xFFF5F5F5)),
 
-            // --- โค้ดส่วนลดสินค้า ---
             ListTile(
               leading: const Icon(Icons.local_offer, color: Colors.red),
               title: Text(
@@ -291,7 +277,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
             ),
             const Divider(),
 
-            // --- โค้ดส่งฟรี ---
             ListTile(
               leading: const Icon(Icons.local_shipping, color: Colors.green),
               title: Text(
@@ -313,7 +298,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
     );
   }
 
-  // ปรับการโชว์ยอดเงินให้ชัดเจนขึ้น
   Widget _buildPaymentSummary() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -368,7 +352,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
       ),
     );
   }
-  // --- ส่วนของ Widget ที่ใช้โชว์ที่อยู่ ---
   Widget _buildAddressSection() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -390,8 +373,6 @@ class _BuyNowPageState extends State<BuyNowPage> {
       ),
     );
   }
-
-  // --- ส่วนของ Widget ที่ใช้โชว์รายการสินค้า ---
   Widget _buildProductList() {
     return ListView.builder(
       shrinkWrap: true,

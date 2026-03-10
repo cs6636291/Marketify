@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:marketify_app/core/common/constants/app_constants.dart';
 import 'package:marketify_app/features/auth/presentation/page/auth_signin_page.dart';
 import 'package:marketify_app/main_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // เพิ่ม import
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -40,24 +40,18 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward();
-
-    // เริ่มกระบวนการเช็คสถานะการเข้าสู่ระบบ
     _checkAuthAndNavigate();
   }
 
-  // ฟังก์ชันใหม่สำหรับเช็ค SharedPreferences
   Future<void> _checkAuthAndNavigate() async {
     final prefs = await SharedPreferences.getInstance();
-    // ลองหาค่า user_id ถ้าไม่มีจะเป็น null
     final String? userId = prefs.getString('user_id');
 
-    // รอให้ Animation โชว์อย่างน้อย 3 วินาทีตามใจเจ้าของโค้ด
     await Future.delayed(const Duration(milliseconds: 3000));
 
     if (mounted) {
       Widget nextScreen;
 
-      // ถ้า userId ไม่เป็น null แปลว่าเคย Login แล้ว
       if (userId != null && userId.isNotEmpty) {
         nextScreen = const MainScreen();
       } else {
@@ -83,7 +77,6 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
   
-  // ส่วน build เหมือนเดิมทุกประการ...
   @override
   Widget build(BuildContext context) {
     return Scaffold(

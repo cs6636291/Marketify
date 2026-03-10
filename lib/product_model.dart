@@ -5,9 +5,9 @@ class Product {
   final String imageUrl;
   final String description;
   final int stock;
-  final String shopName; // 1. เพิ่มตัวแปร stock เป็น int
+  final String shopName;
   final String shopLogo;
-  final String shopId; // 1. เพิ่มตัวแปร stock เป็น int
+  final String shopId;
 
   Product({
     required this.id,
@@ -15,10 +15,10 @@ class Product {
     required this.price,
     required this.imageUrl,
     required this.description,
-    required this.stock, // 2. เพิ่มใน Constructor
+    required this.stock,
     required this.shopName,
     required this.shopLogo,
-    required this.shopId, // 2. เพิ่มใน Constructor
+    required this.shopId,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {

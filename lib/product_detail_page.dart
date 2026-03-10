@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'product_model.dart';
 
 class ProductDetailPage extends StatefulWidget {
-  // เพิ่มตัวแปรรับค่า product จากหน้าอื่น
   final Product product;
 
   const ProductDetailPage({super.key, required this.product});
@@ -18,8 +17,6 @@ class ProductDetailPage extends StatefulWidget {
 class _ProductDetailPageState extends State<ProductDetailPage> {
   bool isFollowing = false;
   int selectedQuantity = 1;
-
-  // เปลี่ยนเป็น late product เพื่อเก็บข้อมูลที่อาจจะ update จาก API
   late Product product;
   Future<List<Review>>? _reviewsFuture;
   bool _isInitialized = false;
@@ -27,15 +24,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   @override
   void initState() {
     super.initState();
-    // กำหนดค่าเริ่มต้นจาก widget ที่ส่งมา
     product = widget.product;
     _reviewsFuture = ApiService().fetchReviews(product.id);
 
-    // ดึงข้อมูลล่าสุดจาก Server เผื่อสต็อกเปลี่ยน
     _refreshProductData(product.id);
   }
 
-  // ฟังก์ชันดึงข้อมูลใหม่จาก API
   Future<void> _refreshProductData(String productId) async {
     try {
       final updatedProduct = await ApiService().fetchProductById(productId);

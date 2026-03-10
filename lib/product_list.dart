@@ -6,7 +6,7 @@ import 'package:marketify_app/search_page.dart';
 
 class ProductList extends StatefulWidget {
   final String? searchKeyword;
-  final String? categoryId; // เพิ่มตัวแปร categoryId
+  final String? categoryId;
 
   const ProductList({super.key, this.searchKeyword, this.categoryId});
 
@@ -84,7 +84,6 @@ class _ProductListState extends State<ProductList> {
           children: [
             const SizedBox(height: 10),
             FutureBuilder<List<Product>>(
-              // แก้ไข: เช็คว่าถ้ามี categoryId ให้กรองตามหมวดหมู่ก่อน
               future: (widget.categoryId != null)
                   ? ApiService().fetchProductsByCategory(widget.categoryId!)
                   : (_searchController.text.isNotEmpty)
